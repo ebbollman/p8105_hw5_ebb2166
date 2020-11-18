@@ -28,9 +28,7 @@ scale_fill_discrete = scale_fill_viridis_d()
 
 ## Problem 1
 
-#### Step 1: Read in and prepare data
-
-For each city, want to count number of unsolved homicides, and then number of total homicides so can compute proportion unsolved.  
+#### Step 1: Read in, describe, and prepare data
 
 ```{r}
 homicide_df = 
@@ -48,7 +46,11 @@ homicide_df =
   
 ```
 
+This Washington Post dataset includes information on homicides between the years 2007 and 2017 in major U.S. city: recording the name, age, and race of the victim as well as geocoordinates for where the homicide took place. Each case is categorized by whether an arrest was made, and whether the case was closed: exploring patterns of unsolved homicides in urban areas nationally. 
+
 #### Step 2: Compute total and unsolved homicides 
+
+For each city, want to count number of unsolved homicides, and then number of total homicides so can compute proportion unsolved.  
 
 ```{r}
 aggregate_df = 
@@ -100,3 +102,4 @@ results_df %>%
   )
 ```
 
+The cities with the highest proportion of unsolved homicides are Chicago, New Orleans, and Baltimore. Having worked for 4 years as an emergency physician in the only trauma center hospital serving New Orleans, this finding unfortunately does not surprise me...
