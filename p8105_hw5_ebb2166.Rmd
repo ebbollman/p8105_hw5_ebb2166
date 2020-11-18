@@ -103,3 +103,29 @@ results_df %>%
 ```
 
 The cities with the highest proportion of unsolved homicides are Chicago, New Orleans, and Baltimore. Having worked for 4 years as an emergency physician in the only trauma center hospital serving New Orleans, this finding unfortunately does not surprise me...
+
+
+## Problem 2
+
+#### Step 1: Read in data
+
+First trial reading in path. 
+
+```{r}
+path_df = 
+  tibble(
+    path = list.files("lda_data")
+  ) %>% 
+  mutate(path = str_c("lda_data/", path))
+
+read_csv(path_df$path[[1]])
+```
+
+Next trial a `for` loop.
+
+
+
+
+Want column for each df for each participant next to path for that participant.
+
+Then mutate to get study arm, pivot to make table longer. 
