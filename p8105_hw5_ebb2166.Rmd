@@ -109,7 +109,7 @@ The cities with the highest proportion of unsolved homicides are Chicago, New Or
 
 #### Step 1: Read in data using map and tidy
 
-```{r}
+```{r INCLUDE = FALSE}
 study_df = 
   tibble(
     path = list.files("lda_data")
@@ -134,8 +134,30 @@ study_df =
     values_to = "observation"
   ) %>% 
   mutate(week = as.numeric(str_sub(week, start = 6L)))
+
+study_df
 ```
 
 Annotation of steps: 1) listing csv files in tibble, 2) adding relative path, 3) map to iterate `read_csv` over each item in tibble, 4) unnest to get data, 5) `str_sub` and `separate` to change relative path.csv names into proper variable names, and renaming control/experimental values, 6) `pivot_longer` to facilitate plot with final `str_sub` step.
+
+#### Step 2: Make a plot
+
+```{r}
+study_df %>% 
+  ggplot(aes(x = week, y = observation, color = subject)) + 
+  geom_line() + 
+  facet_grid(. ~ study_arm) + 
+  labs(
+    title = "Longitudinal findings for experimental and control groups",
+    x = "Study week",
+    y = "Observation value"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "Subject",
+    discrete = TRUE
+  )
+```
+
+This plot suggests that observation values for the experimental group increased over the study period, whereas findings for the control group remained generally unchanged.
 
 
