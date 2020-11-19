@@ -107,25 +107,35 @@ The cities with the highest proportion of unsolved homicides are Chicago, New Or
 
 ## Problem 2
 
-#### Step 1: Read in data
-
-First trial reading in path. 
+#### Step 1: Read in data using map and tidy
 
 ```{r}
-path_df = 
+study_df = 
   tibble(
     path = list.files("lda_data")
   ) %>% 
-  mutate(path = str_c("lda_data/", path))
-
-read_csv(path_df$path[[1]])
+  mutate(path = str_c("lda_data/", path),
+         lda_df = map(.x = path, read_csv)) %>% 
+  unnest(lda_df) %>% 
+  mutate(path = str_sub(path, start = 10L, end = 15L)) %>% 
+  separate(
+    path,
+    into = c("study_arm", "subject"),
+  ) %>% 
+  mutate(
+    study_arm = case_when(
+      study_arm == "con" ~ "control",
+      study_arm == "exp" ~ "experimental"
+    )
+  ) %>% 
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    values_to = "observation"
+  ) %>% 
+  mutate(week = as.numeric(str_sub(week, start = 6L)))
 ```
 
-Next trial a `for` loop.
+Annotation of steps: 1) listing csv files in tibble, 2) adding relative path, 3) map to iterate `read_csv` over each item in tibble, 4) unnest to get data, 5) `str_sub` and `separate` to change relative path.csv names into proper variable names, and renaming control/experimental values, 6) `pivot_longer` to facilitate plot with final `str_sub` step.
 
 
-
-
-Want column for each df for each participant next to path for that participant.
-
-Then mutate to get study arm, pivot to make table longer. 
