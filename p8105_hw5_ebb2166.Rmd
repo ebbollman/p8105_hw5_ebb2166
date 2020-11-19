@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, INCLUDE = FALSE}
 library(tidyverse)
 library(rvest)
+library(patchwork)
 
 knitr::opts_chunk$set(
   fig.width = 10,
@@ -166,8 +167,6 @@ This plot suggests that observation values for the experimental group increased 
 
 #### Step 1: Create simulation dataset and function
 
-Dataset and function creation with trial for 10 simulations
-
 ```{r}
 sim_ttest = function(n = 30, mu = 0, sigma = 5) {
   
@@ -185,27 +184,92 @@ sim_ttest = function(n = 30, mu = 0, sigma = 5) {
 }
 ```
 
-Simulation results trial for mu = 0
+This creates function with dataset of normal distribution, and performs one-sample, two-sided t-test for the null hypothesis of mu = 0.
 
 ```{r}
 sim_results = 
-  rerun(5000, sim_ttest(mu = 0)) %>% 
+  rerun(100, sim_ttest(mu = 0)) %>% 
   bind_rows()
 ```
+
+This output simulates the above `sim_ttest` function 100 times for a population mean (mu-hat) of 0.
 
 #### Step 2: Iterate simulation over varying mu from 0 through 6
 
 ```{r}
 sim_results_df = 
   tibble(
-    samp_mu = c(0, 1, 2, 3, 4, 5, 6)
+    pop_mu = c(0, 1, 2, 3, 4, 5, 6)
   ) %>% 
-  mutate(output_lists = map(.x = samp_mu, ~ rerun(5000, sim_ttest(mu = .x))),
+  mutate(output_lists = map(.x = pop_mu, ~ rerun(5000, sim_ttest(mu = .x))),
          estimate_df = map(output_lists, bind_rows)) %>% 
   select(-output_lists) %>% 
-  unnest(estimate_df)
+  unnest(estimate_df) %>% 
+  mutate(test_results = case_when(
+    p.value < 0.05 ~ "reject",
+    p.value >= 0.05 ~ "fail_to_reject"))
+
 ```
 
+This iterates the `sim_ttest` function 5000 times using population means from 0 to 6, and saves the output of each simulation in a dataframe: 35,000 rows for 5000 simulations of the t-test performed on 7 distinct populations.
+
+#### Step 3: Visualize the impact of effect size on power.
+
+Plot the power of the t-test to reject Ho of mu = 0 (the proportion of times rejecting the null) versus population mean.
+
+```{r}
+power_plot = 
+  sim_results_df %>% 
+  group_by(pop_mu) %>% 
+  summarize(
+    reject = sum(test_results == "reject"),
+    total = n(),
+    samp_power = reject / total)
+
+power_plot %>% 
+  ggplot(aes(x = pop_mu, y = samp_power)) + 
+  geom_point() + 
+  labs(
+    title = "Power versus Effect Size",
+    x = "Population mean",
+    y = "Power"
+  )
+```
+
+As the predetermined population mean (ergo, the effect size, since testing against a null hypothesis of the population mean 0) increases, the power (probability of rejecting the null hypothesis) increases. 
+
+#### Step 4: Plot estimates of population mean vs true population mean
+
+```{r}
+plot_1 = 
+  sim_results_df %>% 
+  group_by(pop_mu) %>% 
+  summarize(mean_mu = mean(estimate)) %>% 
+  ggplot(aes(x = pop_mu, y = mean_mu)) + 
+  geom_point() + 
+  labs(title = "average sample mean versus true population mean: all simulations",
+       x = "population mean",
+       y = "average sample mean")
+```
+
+```{r}
+plot_2 = 
+  sim_results_df %>% 
+  filter(test_results == "reject") %>% 
+  group_by(pop_mu) %>% 
+  summarize(mean_mu = mean(estimate)) %>% 
+  ggplot(aes(x = pop_mu, y = mean_mu)) + 
+  geom_point() + 
+  labs(title = "average sample mean versus true population mean: significant simulations",
+       x = "population mean",
+       y = "average sample mean")
+```
+
+```{r}
+plot_1 / plot_2
+```
+
+This plot shows that the sample mean for tests in which the null is rejected is less close to the true population mean than the plot when all simulations are included. I don't know why this is.
 
 
 
